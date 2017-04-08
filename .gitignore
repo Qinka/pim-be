@@ -25,7 +25,8 @@ cabal.sandbox.config
 .stack-work/
 cabal.project.local
 
-
+## For Yesod
+client_session_key.aes
 
 # For LaTeX
 
