@@ -25,21 +25,25 @@ Todo json
   own Text
   context Text
   date Day
+  prioity Text
   deriving Show Eq
 Note json
   own Text
   context Text
+  prioity Text
   deriving Show Eq
 Appointment json
   own Text
   context Text
   date Day
+  prioity Text
   deriving Show Eq
 Contact json
   fname Text
   lname Text
   email Text
   own Text
+  prioity Text
   deriving Show Eq
 |]
 
@@ -69,35 +73,35 @@ getListR = do
   own <- lookupGetParam "own"
   begin <- readMT <$> lookupGetParam "begin"
   end   <- readMT <$> lookupGetParam "end"
-  todos        <- map kv <$> fetchTodos        own begin end
-  notes        <- map kv <$> fetchNotes        own
-  appointments <- map kv <$> fetchAppointments own begin end
-  contacts     <- map kv <$> fetchContacts     own
-  returnSuccess $ todos ++ appointments ++ contacts
+  todos        <- map (kv "todo")        <$> fetchTodos        own begin end
+  notes        <- map (kv "note")        <$> fetchNotes        own
+  appointments <- map (kv "appointment") <$> fetchAppointments own begin end
+  contacts     <- map (kv "contact")     <$> fetchContacts     own
+  returnSuccess $ todos ++ appointments ++ contacts ++ notes
   
 getListTodoR :: Handler Value
 getListTodoR = do
   own <- lookupGetParam "own"
   begin <- readMT <$> lookupGetParam "begin"
   end   <- readMT <$> lookupGetParam "end"
-  returnSuccess =<< map kv <$> fetchTodos own begin end
+  returnSuccess =<< map (kv "todo") <$> fetchTodos own begin end
 
 getListNoteR :: Handler Value
 getListNoteR = do
   own <- lookupGetParam "own"
-  returnSuccess =<< map kv <$> fetchNotes own
+  returnSuccess =<< map (kv "note") <$> fetchNotes own
 
 getListAppointmentR :: Handler Value
 getListAppointmentR = do
   own <- lookupGetParam "own"
   begin <- readMT <$> lookupGetParam "begin"
   end   <- readMT <$> lookupGetParam "end"
-  returnSuccess =<< map kv <$> fetchAppointments own begin end
+  returnSuccess =<< map (kv "appointment") <$> fetchAppointments own begin end
 
 getListContactR :: Handler Value
 getListContactR = do
   own <- lookupGetParam "own"
-  returnSuccess =<< map kv <$> fetchContacts own
+  returnSuccess =<< map (kv "contact") <$> fetchContacts own
 
 
 postAddR :: Handler Value
@@ -113,22 +117,24 @@ postAddR = do
         addAppointment = updateDateable Appointment (Just AppointmentOwn) (Just AppointmentContext) (Just AppointmentDate)
         addNote        = updateItem     Note        (Just NoteOwn)        (Just NoteContext)
         addContact     = do
-          i     <- readMT <$> lookupPostParam "id"
-          own   <-            lookupPostParam "own"
-          lname <-            lookupPostParam "lname"
-          fname <- readMT <$> lookupPostParam "fname"
-          email <-            lookupPostParam "email"
+          i       <- readMT <$> lookupPostParam "id"
+          own     <-            lookupPostParam "own"
+          lname   <-            lookupPostParam "lname"
+          fname   <-            lookupPostParam "fname"
+          email   <-            lookupPostParam "email"
+          prioity <-            lookupPostParam "prioity"
           case i of
             Just i' -> do
               let up = catMaybes [(Just ContactOwn) `match` own,(Just ContactLname) `match` lname, (Just ContactFname) `match` fname]
               runDB $ update i' up
               returnSuccess ()
-            Nothing -> case (own,lname,fname,email) of
-              (Just o,Just l,Just f,Just e) -> returnSuccess =<< (runDB $ insert $ Contact f l e o)
-              (Nothing,_,_,_) -> invalidArgs ["need first name"]
-              (_,Nothing,_,_) -> invalidArgs ["need last  name"]
-              (_,_,Nothing,_) -> invalidArgs ["need email"]
-              (_,_,_,Nothing) -> invalidArgs ["need own"]
+            Nothing -> case (own,lname,fname,email,prioity) of
+              (Just o,Just l,Just f,Just e,Just p) -> returnSuccess =<< (runDB $ insert $ Contact f l e o p)
+              (Nothing,_,_,_,_) -> invalidArgs ["need own"]
+              (_,Nothing,_,_,_) -> invalidArgs ["need last  name"]
+              (_,_,Nothing,_,_) -> invalidArgs ["need first name"]
+              (_,_,_,Nothing,_) -> invalidArgs ["need email"]
+              (_,_,_,_,Nothing) -> invalidArgs ["need prioity"]
 
 
 
@@ -154,7 +160,7 @@ updateDateable :: ( PersistEntity v
                   , Key v ~ k
                   , PersistEntityBackend v ~ SqlBackend
                   ) 
-               => (Text -> Text -> Day -> v) 
+               => (Text -> Text -> Day -> Text-> v) 
                -> Maybe o -> Maybe c -> Maybe d
                -> Handler Value
 updateDateable func vo vc vd = do
@@ -162,16 +168,18 @@ updateDateable func vo vc vd = do
   own     <-            lookupPostParam "own"
   context <-            lookupPostParam "context"
   date    <- readMT <$> lookupPostParam "date"
+  prioity <-            lookupPostParam "prioity"
   case i of
     Just i' -> do
       let up = catMaybes [vo `match` own,vc `match` context, vd `match` date]
       runDB $ update i' up
       returnSuccess ()
-    Nothing -> case (own,context,date) of
-      (Just o,Just c, Just d) -> returnSuccess =<< (runDB $ insert $ func o c d)
-      (Nothing,_,_) -> invalidArgs ["need owner"]
-      (_,Nothing,_) -> invalidArgs ["need context"]
-      (_,_,Nothing) -> invalidArgs ["need date"]
+    Nothing -> case (own,context,date,prioity) of
+      (Just o,Just c, Just d,Just p) -> returnSuccess =<< (runDB $ insert $ func o c d p)
+      (Nothing,_,_,_) -> invalidArgs ["need owner"]
+      (_,Nothing,_,_) -> invalidArgs ["need context"]
+      (_,_,Nothing,_) -> invalidArgs ["need date"]
+      (_,_,_,Nothing) -> invalidArgs ["need prioity"]
       
 match (Just f) (Just v) = Just $ f =. v
 match _        _        = Nothing
@@ -184,22 +192,24 @@ updateItem :: ( PersistEntity v
               , Key v ~ k
               , PersistEntityBackend v ~ SqlBackend
               ) 
-            => (Text -> Text -> v) 
+            => (Text -> Text -> Text -> v) 
             -> Maybe o -> Maybe c
             -> Handler Value
 updateItem func vo vc = do
   i       <- readMT <$> lookupPostParam "id"
   own     <-            lookupPostParam "own"
   context <-            lookupPostParam "context"
+  prioity <-            lookupPostParam "prioity"
   case i of
     Just i' -> do
       let up = catMaybes [vo `match` own,vc `match` context]
       runDB $ update i' up
       returnSuccess ()
-    Nothing -> case (own,context) of
-      (Just o,Just c) -> returnSuccess =<< (runDB $ insert $ func o c)
-      (Nothing,_) -> invalidArgs ["need owner"]
-      (_,Nothing) -> invalidArgs ["need context"]
+    Nothing -> case (own,context,prioity) of
+      (Just o,Just c,Just p) -> returnSuccess =<< (runDB $ insert $ func o c p)
+      (Nothing,_,_) -> invalidArgs ["need owner"]
+      (_,Nothing,_) -> invalidArgs ["need context"]
+      (_,_,Nothing) -> invalidArgs ["need prioity"]
 \end{code}
 
 
@@ -236,8 +246,8 @@ mapEntities = return . map (\(Entity key item) -> (key,item))
 returnSuccess :: ToJSON a => a -> Handler Value
 returnSuccess item = returnJson $ object ["status" .= (0::Int), "context" .= item]
 
-kv :: (PersistEntity v,Key v ~ k,ToJSON v,ToJSON k) => (k,v) -> Value
-kv (k,v) = object [ "id" .= k,"item" .= v]
+kv :: (PersistEntity v,Key v ~ k,ToJSON v,ToJSON k) => Text -> (k,v) -> Value
+kv t (k,v) = object [ "id" .= k,t .= v]
 
 readMT :: Read a => Maybe Text -> Maybe a
 readMT = fmap (read . T.unpack)
@@ -246,7 +256,7 @@ readMT = fmap (read . T.unpack)
 For fetch todo
 \begin{code}
 fetchTodos ::  Maybe Text -> Maybe Day -> Maybe Day -> Handler [(TodoId,Todo)]
-fetchTodos own beg end = fetchItems (Just TodoOwn) (Just TodoDate) own beg end [Asc TodoDate]
+fetchTodos own beg end = fetchItems (Just TodoOwn) (Just TodoDate) own beg end [Desc TodoDate]
 \end{code}
 
 For fetch note
@@ -258,7 +268,7 @@ fetchNotes own = fetchItems (Just NoteOwn) Nothing own Nothing Nothing []
 For fetch appointment
 \begin{code}
 fetchAppointments :: Maybe Text -> Maybe Day -> Maybe Day -> Handler [(AppointmentId,Appointment)]
-fetchAppointments own beg end = fetchItems (Just AppointmentOwn) (Just AppointmentDate) own beg end [Asc AppointmentDate]
+fetchAppointments own beg end = fetchItems (Just AppointmentOwn) (Just AppointmentDate) own beg end [Desc AppointmentDate]
 \end{code}
 
 For fetch contact

@@ -15,7 +15,8 @@
         , breaklines           
         , basicstyle=\small\ttfamily  
         , flexiblecolumns=false  
-        , basewidth={0.5em,0.45em}   
+        , basewidth={0.5em,0.45em} 
+        , language=Haskell  
         , literate={+}{{$+$}}1 % plus  
             {/}{{$/$}}1                  
             {*}{{$*$}}1                  
@@ -47,6 +48,7 @@
         , basicstyle=\small\ttfamily  
         , flexiblecolumns=false  
         , basewidth={0.5em,0.45em} 
+        , language=Java
         , literate={+}{{$+$}}1 % plus  
                    {/}{{$/$}}1                  
                    {*}{{$*$}}1                  
@@ -69,10 +71,34 @@
         , basewidth={0.5em,0.45em}             
         , numbers=left%
         , #1%
+        , language=
         }
     \csname lst@SetFirstLabel\endcsname}
 {\csname lst@SaveFirstLabel\endcsname}
+\lstnewenvironment{powershell}[1][]
+{\lstset{ frame=tblr
+        , breaklines           
+        , basicstyle=\small\ttfamily  
+        , flexiblecolumns=false  
+        , basewidth={0.5em,0.45em}             
+        , numbers=left%
+        , #1%
+    }
+    \csname lst@SetFirstLabel\endcsname}
+{\csname lst@SaveFirstLabel\endcsname}
 
+\lstnewenvironment{bash}[1][]
+{\lstset{ frame=tblr
+        , breaklines           
+        , basicstyle=\small\ttfamily  
+        , flexiblecolumns=false  
+        , basewidth={0.5em,0.45em}             
+        , numbers=left%
+        , language=bash
+        , #1%
+    }
+    \csname lst@SetFirstLabel\endcsname}
+{\csname lst@SaveFirstLabel\endcsname}
 
 \begin{document}
     \maketitle
@@ -135,7 +161,6 @@
     For the common text interface, the followings are necessary field: 
     \begin{json}
  {
-     "type":"todo",
      "date":"{DATE}",
      "context:"{STRING}"
  }
@@ -148,7 +173,6 @@
     For the common text interface, the followings are necessary field: 
     \begin{json}
  {
-     "type":"note",
      "context":"{STRING}",
  }
     \end{json}
@@ -160,7 +184,6 @@
     For the common text interface, the followings are necessary field: 
     \begin{json}
  {
-     "type":"appointment",
      "date":"{DATE}",
      "context":"{STRING}"
  }
@@ -173,7 +196,6 @@
     For the common text interface, the followings are necessary field: 
     \begin{json}
  {
-     "type":"contact",
      "first-name":"{STRING}",
      "last-name":"{STRING}",
      "email":"{STRING}"
@@ -182,7 +204,7 @@
     
     
     \subsection{[Enum] Priority}
-    The priority should have five level: \verb|right now|, \verb|urgent|, \verb|normal|, \verb|soon|, and \verb|never|.
+    The priority should have five level: \texttt{\textbf{right now}}, \texttt{\textbf{urgent}}, \texttt{\textbf{normal}}, \texttt{\textbf{soon}}, and \texttt{\textbf{never}}.
     
     \section{Application Connection Interface}
     This section is about the standard actions for the client, which try to manage the information itself or the data itself.
@@ -240,7 +262,7 @@
 
   \verb|POST /add| is the API to upload or change the item.
 
-  \verb|type| is the param which point out the update item's kind.
+  \verb|type (get param)| is the param which point out the update item's kind.
 
   \verb|id|, optional, mark up the id of the item, and this means change, not the addition.
 
@@ -255,6 +277,14 @@
   \verb|last-name|, for contact only, this param point out the last name of the item.
 
   \verb|first-name|, for contact only, this param point out the first name of the item.
+
+  \subsection{GET /list}
+  
+  \verb|GET /list| is the API to fetch the list and items of all kind of items' collection.
+  
+  \verb|begin| and \verb|end| are the params which limit the date of the collection of the request's result.
+  
+  \verb|own| is the param which limit the ownweship.
 
   \subsection{GET /list/todo}
 
@@ -289,14 +319,116 @@
 
   \verb|own| is the param which limit the ownweship.  
 
-  \subsection{Return}
+  \subsection{Return \& Example}
 
   The return include a status code, and the list of items:
   
+  \paragraph{E.G. 1}
+  In the powershell, both Windows and *nix are O.K., the following shell command is for the test.
+  \begin{powershell}
+ # PowerShell
+ $params = @{ Method = 'GET';
+              Uri = 'http://localhost:3000/list'
+            }
+ $(Invoke-WebRequest  @params).Content  | jq .
+  \end{powershell} 
+  or just the bash:
+  \begin{bash}
+ # bash shell
+ curl localhost:3000/list | jq .
+  \end{bash}
+  
+  The return datas will look like this:
+  \begin{json}
+{
+    "status": 0,
+    "context": [
+    {
+        "todo": {
+            "context": "abc",
+            "own": "qinka",
+            "date": "2017-04-08",
+            "prioity": "normal"
+        },
+        "id": 2
+    },
+    {
+        "todo": {
+            "context": "abc",
+            "own": "qinka",
+            "date": "2017-04-07",
+            "prioity": "normal"
+        },
+        "id": 1
+    },
+    {
+        "contact": {
+            "email": "qinka@qinak.pw",
+            "own": "john",
+            "prioity": "normal",
+            "lname": "Lee",
+            "fname": "John"
+        },
+        "id": 1
+    },
+    {
+        "contact": {
+            "email": "qinka@qinka.pw",
+            "own": "Qinka",
+            "prioity": "normal",
+            "lname": "Lee",
+            "fname": "John"
+        },
+        "id": 2
+    },
+    {
+        "note": {
+            "context": "1+1",
+            "own": "qinka",
+            "prioity": "normal"
+        },
+        "id": 1
+    },
+    {
+        "note": {
+            "context": "1 1",
+            "own": "qinka",
+            "prioity": "normal"
+        },
+        "id": 2
+    }
+    ]
+}
+  \end{json}
+  
+  \paragraph{E.G. 2}
+  
+  To add a item, let add a contact with \verb|John Lee <qinka@qinka.pw>|:
+  \begin{powershell}
+ # PowerShell
+ $param = @{ Uri = 'http://localhost:3000/add?type=contact';
+             Method = 'POST';
+             Body = @{ own = 'Qinka';
+                       lname = 'Lee';
+                       fname = 'John';
+                       email = 'qinka@qinka.pw';
+                       prioity = 'normal'
+                     }
+           }
+ $(Invoke-WebRequest @param).Content | jq .
+  \end{powershell}
+  \begin{bash}
+ # bash
+ curl 'localhost:3000/add?type=contact' -X POST \
+   -d 'own=Qinka' -d 'lname=Lee' -d 'fname=John' \
+   -d 'email=qinka@qinka.pw' -d 'prioity=normal' | jq .
+  \end{bash}
+  
+  The return datas will look like this:
   \begin{json}
  {
-   "status" : 0,
-   "context" : [ { "type":"note","context":"abc"}]
+     "status": 0,
+     "context": 2
  }
   \end{json}
   
