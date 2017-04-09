@@ -2,6 +2,7 @@
 module Main where
 
 import Data.Aeson
+import Data.Maybe
 import Data.Time
 import Yesod.Core
 import Yesod.Core.Json
@@ -21,24 +22,24 @@ import qualified Data.ByteString.Char8 as BC8
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Todo json
-  date Day
+  own Text
   context Text
-  owner Text
+  date Day
   deriving Show Eq
 Note json
+  own Text
   context Text
-  owner Text
   deriving Show Eq
 Appointment json
-  date Day
+  own Text
   context Text
-  owner Text
+  date Day
   deriving Show Eq
 Contact json
   fname Text
   lname Text
   email Text
-  owner Text
+  own Text
   deriving Show Eq
 |]
 
@@ -64,65 +65,71 @@ instance YesodPersist App where
   runDB a = getYesod >>= (runSqlPool a . dbPool)
 
 getListR :: Handler Value
-getListR = undefined
+getListR = do
+  own <- lookupGetParam "own"
+  begin <- readMT <$> lookupGetParam "begin"
+  end   <- readMT <$> lookupGetParam "end"
+  todos        <- map kv <$> fetchTodos        own begin end
+  notes        <- map kv <$> fetchNotes        own
+  appointments <- map kv <$> fetchAppointments own begin end
+  contacts     <- map kv <$> fetchContacts     own
+  returnSuccess $ todos ++ appointments ++ contacts
   
 getListTodoR :: Handler Value
 getListTodoR = do
   own <- lookupGetParam "own"
-  let own' = case own of
-        Nothing -> []
-        Just o' -> [ TodoOwner ==. o']
-  begin <- lookupGetParam "begin"
-  end   <- lookupGetParam "end"
-  let limit = case (begin,end) of
-        (Just b,Just e) -> let b' = read $ T.unpack b
-                               e' = read $ T.unpack e
-                           in [ TodoDate >. b'
-                              , TodoDate <. e'
-                              ]
-        _ -> []
-  items <- fmap (map (\(Entity _ item) -> item)) $ runDB $ selectList (own' ++ limit) []
-  returnJson $ object ["status" .= (0::Int), "context" .= items]
-
+  begin <- readMT <$> lookupGetParam "begin"
+  end   <- readMT <$> lookupGetParam "end"
+  returnSuccess =<< map kv <$> fetchTodos own begin end
 
 getListNoteR :: Handler Value
 getListNoteR = do
   own <- lookupGetParam "own"
-  let own' = case own of
-        Nothing -> []
-        Just o' -> [ NoteOwner ==. o']
-  items <- fmap (map (\(Entity _ item) -> item)) $ runDB $ selectList own'  []
-  returnJson $ object ["status" .= (0::Int), "context" .= items]
+  returnSuccess =<< map kv <$> fetchNotes own
 
 getListAppointmentR :: Handler Value
 getListAppointmentR = do
   own <- lookupGetParam "own"
-  let own' = case own of
-        Nothing -> []
-        Just o' -> [ AppointmentOwner ==. o']
-  begin <- lookupGetParam "begin"
-  end   <- lookupGetParam "end"
-  let limit = case (begin,end) of
-        (Just b,Just e) -> let b' = read $ T.unpack b
-                               e' = read $ T.unpack e
-                           in [ AppointmentDate >. b'
-                              , AppointmentDate <. e'
-                              ]
-        _ -> []
-  items <- fmap (map (\(Entity _ item) -> item)) $ runDB $ selectList (own' ++ limit) []
-  returnJson $ object ["status" .= (0::Int), "context" .= items]
+  begin <- readMT <$> lookupGetParam "begin"
+  end   <- readMT <$> lookupGetParam "end"
+  returnSuccess =<< map kv <$> fetchAppointments own begin end
 
 getListContactR :: Handler Value
 getListContactR = do
   own <- lookupGetParam "own"
-  let own' = case own of
-        Nothing -> []
-        Just o' -> [ TodoOwner ==. o']
-  items <- fmap (map (\(Entity _ item) -> item)) $ runDB $ selectList own' []
-  returnJson $ object ["status" .= (0::Int), "context" .= items]
+  returnSuccess =<< map kv <$> fetchContacts own
 
-postAddR :: Handler T.Text
-postAddR = undefined
+
+postAddR :: Handler Value
+postAddR = do
+  typ <- lookupGetParam "type"
+  case typ of
+    Just "todo"          -> addTodo
+    Just "note"          -> addNote
+    Just "appointment"   -> addAppointment
+    Just "contact"       -> addContact
+    _                    -> invalidArgs ["need type"]
+  where addTodo        = updateDateable Todo        (Just TodoOwn)        (Just TodoContext)        (Just TodoDate)
+        addAppointment = updateDateable Appointment (Just AppointmentOwn) (Just AppointmentContext) (Just AppointmentDate)
+        addNote        = updateItem     Note        (Just NoteOwn)        (Just NoteContext)
+        addContact     = do
+          i     <- readMT <$> lookupPostParam "id"
+          own   <-            lookupPostParam "own"
+          lname <-            lookupPostParam "lname"
+          fname <- readMT <$> lookupPostParam "fname"
+          email <-            lookupPostParam "email"
+          case i of
+            Just i' -> do
+              let up = catMaybes [(Just ContactOwn) `match` own,(Just ContactLname) `match` lname, (Just ContactFname) `match` fname]
+              runDB $ update i' up
+              returnSuccess ()
+            Nothing -> case (own,lname,fname,email) of
+              (Just o,Just l,Just f,Just e) -> returnSuccess =<< (runDB $ insert $ Contact f l e o)
+              (Nothing,_,_,_) -> invalidArgs ["need first name"]
+              (_,Nothing,_,_) -> invalidArgs ["need last  name"]
+              (_,_,Nothing,_) -> invalidArgs ["need email"]
+              (_,_,_,Nothing) -> invalidArgs ["need own"]
+
 
 
 
@@ -130,11 +137,133 @@ main :: IO ()
 main = do
   now <- getCurrentTime
   args <- unwords <$> getArgs
-  runStderrLoggingT $ withPostgresqlPool (BC8.pack args) 100 $ \pool -> liftIO $ do
-    runResourceT $ flip runSqlPool pool $ do
-      runMigration migrateAll
-      insert $ Todo (utctDay now) "abc" "qinka"
+  runStderrLoggingT $ withPostgresqlPool (BC8.pack args) 100 $ \pool -> liftIO $
     warp 3000 $ App pool
 
 
 \end{code}
+
+common for add
+\begin{code}
+updateDateable :: ( PersistEntity v
+                  , ToJSON k
+                  , Read k
+                  , EntityField v Text ~ o
+                  , EntityField v Text ~ c
+                  , EntityField v Day ~ d
+                  , Key v ~ k
+                  , PersistEntityBackend v ~ SqlBackend
+                  ) 
+               => (Text -> Text -> Day -> v) 
+               -> Maybe o -> Maybe c -> Maybe d
+               -> Handler Value
+updateDateable func vo vc vd = do
+  i       <- readMT <$> lookupPostParam "id"
+  own     <-            lookupPostParam "own"
+  context <-            lookupPostParam "context"
+  date    <- readMT <$> lookupPostParam "date"
+  case i of
+    Just i' -> do
+      let up = catMaybes [vo `match` own,vc `match` context, vd `match` date]
+      runDB $ update i' up
+      returnSuccess ()
+    Nothing -> case (own,context,date) of
+      (Just o,Just c, Just d) -> returnSuccess =<< (runDB $ insert $ func o c d)
+      (Nothing,_,_) -> invalidArgs ["need owner"]
+      (_,Nothing,_) -> invalidArgs ["need context"]
+      (_,_,Nothing) -> invalidArgs ["need date"]
+      
+match (Just f) (Just v) = Just $ f =. v
+match _        _        = Nothing
+
+updateItem :: ( PersistEntity v
+              , ToJSON k
+              , Read k
+              , EntityField v Text ~ o
+              , EntityField v Text ~ c
+              , Key v ~ k
+              , PersistEntityBackend v ~ SqlBackend
+              ) 
+            => (Text -> Text -> v) 
+            -> Maybe o -> Maybe c
+            -> Handler Value
+updateItem func vo vc = do
+  i       <- readMT <$> lookupPostParam "id"
+  own     <-            lookupPostParam "own"
+  context <-            lookupPostParam "context"
+  case i of
+    Just i' -> do
+      let up = catMaybes [vo `match` own,vc `match` context]
+      runDB $ update i' up
+      returnSuccess ()
+    Nothing -> case (own,context) of
+      (Just o,Just c) -> returnSuccess =<< (runDB $ insert $ func o c)
+      (Nothing,_) -> invalidArgs ["need owner"]
+      (_,Nothing) -> invalidArgs ["need context"]
+\end{code}
+
+
+Common for fetch 
+\begin{code}
+fetchFilter :: ( EntityField v Text ~ o
+               , EntityField v Day ~ d
+               , PersistEntity v
+               )
+            => Maybe o    -> Maybe d
+            -> Maybe Text -> Maybe Day -> Maybe Day
+            -> [Filter v]
+fetchFilter fo fd vo vb ve = catMaybes $ [match' fo vo (==.), match' fd vb (>=.),match' fd ve (<=.)]
+  where match' (Just a) (Just b) opt = Just $ a `opt` b
+        match' _ _ _                 = Nothing
+
+fetchItems :: ( EntityField v Text ~ o
+              , EntityField v Day ~ d
+              , PersistEntity v
+              , Key v ~ k
+              , PersistEntityBackend v ~ SqlBackend
+              )
+           => Maybe o    -> Maybe d
+           -> Maybe Text -> Maybe Day -> Maybe Day
+           -> [SelectOpt v]
+           -> Handler [(k,v)]
+fetchItems fo fd vo vb ve asc = mapEntities =<< runDB (selectList fl $ asc)
+  where fl = fetchFilter fo fd vo vb ve
+
+mapEntities :: (PersistEntity v, Key v ~ k)
+            => [Entity v] -> Handler [(k,v)]
+mapEntities = return . map (\(Entity key item) -> (key,item))
+
+returnSuccess :: ToJSON a => a -> Handler Value
+returnSuccess item = returnJson $ object ["status" .= (0::Int), "context" .= item]
+
+kv :: (PersistEntity v,Key v ~ k,ToJSON v,ToJSON k) => (k,v) -> Value
+kv (k,v) = object [ "id" .= k,"item" .= v]
+
+readMT :: Read a => Maybe Text -> Maybe a
+readMT = fmap (read . T.unpack)
+\end{code}
+
+For fetch todo
+\begin{code}
+fetchTodos ::  Maybe Text -> Maybe Day -> Maybe Day -> Handler [(TodoId,Todo)]
+fetchTodos own beg end = fetchItems (Just TodoOwn) (Just TodoDate) own beg end [Asc TodoDate]
+\end{code}
+
+For fetch note
+\begin{code}
+fetchNotes :: Maybe Text -> Handler [(NoteId,Note)]
+fetchNotes own = fetchItems (Just NoteOwn) Nothing own Nothing Nothing []
+\end{code}
+
+For fetch appointment
+\begin{code}
+fetchAppointments :: Maybe Text -> Maybe Day -> Maybe Day -> Handler [(AppointmentId,Appointment)]
+fetchAppointments own beg end = fetchItems (Just AppointmentOwn) (Just AppointmentDate) own beg end [Asc AppointmentDate]
+\end{code}
+
+For fetch contact
+\begin{code}
+fetchContacts :: Maybe Text -> Handler [(ContactId,Contact)]
+fetchContacts own = fetchItems (Just ContactOwn) Nothing own Nothing Nothing []
+\end{code}
+
