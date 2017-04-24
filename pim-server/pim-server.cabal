@@ -9,15 +9,34 @@ license:             GPL-3
 license-file:        LICENSE
 author:              Qinka
 maintainer:          qinka@live.com
--- copyright:           
--- category:            
+copyright:           Copyleft 2017 Qinka <qinka@live.com> <me@qinka.pro>
 build-type:          Simple
 extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
+flag debug
+     description: setup debug
+     default: False
+
+flag threaded
+     description: setup threaded
+     default: True
+     
+flag rtsopts
+     description: setup runtime's report
+     default: False
+
+flag llvm
+     description: setup llvm
+     default: True
+
+flag llvm-special
+     description: setup llvm with specific llvm: llc-3.7 & opt-3.7
+     default: False
+                     
 executable pim-server
   main-is:             Main.lhs
-  -- other-modules:       
+  other-modules:      Debug
   default-extensions:    FlexibleContexts
                          GADTs
                          GeneralizedNewtypeDeriving
@@ -43,3 +62,28 @@ executable pim-server
                      , transformers
   hs-source-dirs:      src
   default-language:    Haskell2010
+  ghc-options: -Wall
+  
+  -- Debug
+  if flag(debug)
+     cpp-options: -DDEBUG
+     ghc-options: -DDEBUG -debug -g -O
+     hs-source-dirs: src/d
+  -- Non-Debug
+  else
+     hs-source-dirs: src/r
+     ghc-options: -O3
+  -- threaded
+  if !flag(debug) && flag(threaded)
+     ghc-options: -threaded
+
+  -- rtsopts
+  if flag(rtsopts)
+     ghc-options: -rtsopts
+
+  -- llvm
+  if flag(llvm) || flag(llvm-special)
+     ghc-options: -fllvm
+  if flag(llvm-special)
+     ghc-options: -pgmlo opt-3.7 -pgmlc llc-3.7
+     

@@ -20,6 +20,8 @@ import qualified Data.Text as T
 import qualified Data.ByteString.Char8 as BC8
 
 
+import Debug
+
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Todo json
   own Text
@@ -63,7 +65,8 @@ mkYesod "App" [parseRoutes|
 /add              AddR               POST
 |]
 
-instance Yesod App
+instance Yesod App where
+  shouldLogIO _ = pimShouldLog
 instance YesodPersist App where
   type YesodPersistBackend App = SqlBackend
   runDB a = getYesod >>= (runSqlPool a . dbPool)
@@ -142,9 +145,9 @@ postAddR = do
 main :: IO ()
 main = do
   now <- getCurrentTime
-  args <- unwords <$> getArgs
-  runStderrLoggingT $ withPostgresqlPool (BC8.pack args) 100 $ \pool -> liftIO $
-    warp 3000 $ App pool
+  port:args <- unwords <$> getArgs
+  pimLogger $ withPostgresqlPool (BC8.pack args) 100 $ \pool -> liftIO $
+    warp (read port) $ App pool
 
 
 \end{code}

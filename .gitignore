@@ -38,4 +38,6 @@ client_session_key.aes
 *.toc
 
 
+## For emacs
+*~
 
