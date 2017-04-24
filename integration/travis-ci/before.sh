@@ -3,7 +3,7 @@ set -e
 echo The pre-install for pim-be begin
 
 ### apt update and install
-apt update
+sudo apt update
 echo install
 sudo apt install -y `echo $INSTALL_LIST`
 
