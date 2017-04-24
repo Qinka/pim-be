@@ -27,7 +27,6 @@ if [ x"$DOCKER" = "xtrue" ]; then
     mkdir -p docker.tmp/bin
     cp $HOME/.local/bin/pim-server docker.tmp/bin
     cp $TRAVIS_BUILD_DIR/integration/dockerfiles/hub.dockerfile$DEBUG_EXT docker.tmp/Dockerfile
-    cp $TRAVIS_BUILD_DIR/integration/enters/entrypoint.py docker.tmp/Dockerfile
     ## Build and push
     docker build -t qinka/pim-be:$IMAGE_TAG .
     docker push qinka/pim-be
