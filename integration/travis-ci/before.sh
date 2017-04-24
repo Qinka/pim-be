@@ -44,7 +44,7 @@ docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 ### Setting up stack config file
 rm -rf $TRAVIS_BUILD_DIR/stack.yaml
 STACK_YAML=$TRAVIS_BUILD_DIR/integration/haskell-stack/`cat $TRAVIS_BUILD_DIR/integration/haskell-stack/list | grep $GHC_VER | awk '{print $2}'`
-cp STACK_YAML $TRAVIS_BUILD_DIR/stack.yaml
+cp $STACK_YAML $TRAVIS_BUILD_DIR/stack.yaml
 
 ### Setting up stack
 mkdir -p ~/.local/bin
