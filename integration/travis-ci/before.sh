@@ -5,7 +5,7 @@ echo The pre-install for pim-be begin
 ### apt update and install
 apt update
 echo install
-apt install -y `echo $INSTALL_LIST`
+sudo apt install -y `echo $INSTALL_LIST`
 
 ### Setting Environment Variables
 echo fetch the system\' name
@@ -16,17 +16,17 @@ echo using $OS_DISTRIBUTOR  $OS_CORENAME
 ### Setting up llvm
 if [ -n "$LLVM" ]; then
     echo setting up llvm-$LLVM
-    wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
+    wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
     echo deb http://apt.llvm.org/$OS_CORENAME/ llvm-toolchain-$OS_CORENAME main \
-	 > /etc/apt/sources.list.d/llvm.list
+	 | sudo tee -a /etc/apt/sources.list.d/llvm.list
     echo deb-src http://apt.llvm.org/$OS_CORENAME/ llvm-toolchain-$OS_CORENAME main \
-	 > /etc/apt/sources.list.d/llvm.list
+	 | sudo tee -a /etc/apt/sources.list.d/llvm.list
     echo deb http://apt.llvm.org/$OS_CORENAME/ llvm-toolchain-$OS_CORENAME-$LLVM main \
-	 > /etc/apt/sources.list.d/llvm.list
+	 | sudo tee -a /etc/apt/sources.list.d/llvm.list
     echo deb-src http://apt.llvm.org/$OS_CORENAME/ llvm-toolchain-$OS_CORENAME-$LLVM main \
-	 > /etc/apt/sources.list.d/llvm.list
-    apt update
-    apt install -y libllvm-$LLVM-ocaml-dev \
+	 | sudo tee -a /etc/apt/sources.list.d/llvm.list
+    sudo apt update
+    sudo apt install -y libllvm-$LLVM-ocaml-dev \
 	libllvm$LLVM libllvm$LLVM-dbg \
 	lldb-$LLVM \
 	llvm-$LLVM \
