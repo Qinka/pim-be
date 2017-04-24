@@ -1,8 +1,5 @@
 # Config of travis-ci
 
-# set language
-language: Haskell
-
 # using Ubuntu trusty with rootless
 dist: trusty
 sudo: false
