@@ -20,7 +20,7 @@ fi
 
 ### Setting up threaded
 if [ x"$THREADED" = "xtrue" ]; then
-    STACK_FLAGS=$STACK_FLAGS" --flag pim-sever:threaded "
+    STACK_FLAGS=$STACK_FLAGS" --flag pim-server:threaded "
 fi
 
 ### install
