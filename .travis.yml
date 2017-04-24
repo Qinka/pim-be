@@ -1,8 +1,11 @@
 # Config of travis-ci
 
+# set language
+language: Haskell
+
 # using Ubuntu trusty with rootless
-sudo: false
 dist: trusty
+sudo: false
 
 services:
   # using docker
@@ -30,3 +33,4 @@ script:         source $TRAVIS_BUILD_DIR/integration/travis-ci/main.sh
 
 # after success
 after_success:  source $TRAVIS_BUILD_DIR/integration/travis-ci/after.sh
+

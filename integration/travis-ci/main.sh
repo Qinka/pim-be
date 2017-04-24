@@ -1,6 +1,7 @@
 #!/bin/bash
+set -e
 
-echo Build (begin)
+echo Build \(begin\)
 
 ### display ghc infomation
 ghc -V
@@ -25,8 +26,8 @@ fi
 ### install
 stack install pim-server $STACK_FLAGS
 
-echo Build (end)
+echo Build \(end\)
 
-echo Test (begin)
+echo Test \(begin\)
 
-echo Test (end)
+echo Test \(end\)

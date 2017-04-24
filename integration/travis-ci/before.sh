@@ -1,10 +1,6 @@
 #!/bin/bash
-
+set -e
 echo The pre-install for pim-be begin
-
-
-
-
 
 ### apt update and install
 apt update
