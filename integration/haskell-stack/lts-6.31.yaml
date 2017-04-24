@@ -1,0 +1,6 @@
+resolver: lts-6.31
+packages:
+- pim-server/
+extra-deps: []
+flags: {}
+extra-package-dbs: []
