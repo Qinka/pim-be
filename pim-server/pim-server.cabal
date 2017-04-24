@@ -28,7 +28,7 @@ flag rtsopts
 
 flag llvm
      description: setup llvm
-     default: True
+     default: False
 
 flag llvm-special
      description: setup llvm with specific llvm: llc-3.7 & opt-3.7
