@@ -1,0 +1,42 @@
+# Example Docker Compose File of PIM-BE
+#
+
+# Personal Information Manager's Server
+pim-be:
+  # load image from docker hub
+  # And you might need to change this image's tag
+  image: index.docker.io/qinka/pim-be:pim-server-tag
+  # Entrypoint is "pim-server", so the command is just the params for the pim-server
+  # patten is: PORT host=DBHOST port=DBPORT user=DBUSER dbname=POSTGRES password=PASSWORD
+  command: 3000 host=pim-db port=5432 user=postgres password=12345qwert dbname=postgres
+  # Export the ports, when you are using an debug version or the port is not 3000.
+  ports:
+    - "3000:3000"
+  # Strategy of restart
+  restart: always
+  # link to the db
+  links:
+    - pim-db
+
+# Personal Information Manager's Database (PostgreSQL)
+pim-db:
+  # load image
+  image: postgres:latest
+  # Stroge the datas to local(host).
+  # You can ignore these
+  volumes:
+    - "/my/host/path/to/data:/data/db" # You'd better not the replace /data/db
+  # Setting up via environment variables
+  environment:
+  - POSTGRES_PASSWORD=12345qwert
+  
+  # Expose the ports to other containers
+  # If you want expose these/this port(s) outside, use the port, or just use expose
+  ports:
+    - "54321:5432"
+  # expose:
+  # - "27017"
+  # Strategy or restart
+  restart: always
+  
+  

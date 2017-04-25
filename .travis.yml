@@ -23,10 +23,10 @@ addons:
     - curl
 
 # pre-install
-before_install: source $TRAVIS_BUILD_DIR/integration/travis-ci/before.sh
+before_install: source $TRAVIS_BUILD_DIR/integration/ci/before.sh
 
 # build
-script:         source $TRAVIS_BUILD_DIR/integration/travis-ci/main.sh
+script:         source $TRAVIS_BUILD_DIR/integration/ci/main.sh
 
 # after success
-after_success:  source $TRAVIS_BUILD_DIR/integration/travis-ci/after.sh
+after_success:  source $TRAVIS_BUILD_DIR/integration/ci/after.sh

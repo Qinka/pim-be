@@ -1,7 +1,7 @@
 # pim-server
 FROM debian:latest
 MAINTAINER qinka
-RUN apt update && apt install -y libgmp10 python3 python wget curl jq nano
+RUN apt update && apt install -y libgmp10 python3 python libpq5 wget curl jq nano
 ENV PIM_DEBUG true
 ADD bin /usr/bin
 ENTRYPOINT ["pim-server"]
