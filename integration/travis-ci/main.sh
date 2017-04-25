@@ -7,7 +7,7 @@ echo Build \(begin\)
 ghc -V
 
 ### Setting up optimizing flags
-if [ x"$DEBUG" = "xtrue" ]; then
+if [ x"$DEBUG" = x"true" ]; then
     STACK_FLAGS=$STACK_FLAGS" --flag pim-server:debug --flag pim-server:rtsopts "
 fi
 
@@ -19,7 +19,7 @@ if [ -n "$LLVM" ]; then
 fi
 
 ### Setting up threaded
-if [ x"$THREADED" = "xtrue" ]; then
+if [ x"$THREADED" = x"true" ]; then
     STACK_FLAGS=$STACK_FLAGS" --flag pim-server:threaded "
 fi
 
