@@ -13,7 +13,7 @@ env:
   - GHC_VER=8.0.2  THREADED=true LLVM=3.7 DEBUG=true DOCKER=true
   - GHC_VER=8.0.2  THREADED=true          DEBUG=true
   - GHC_VER=7.10.3 THREADED=true LLVM=3.5 DEBUG=true
-  - GhC_VER=7.10.3 THREADED=true          DEBUG=true
+  - GHC_VER=7.10.3 THREADED=true          DEBUG=true
   
 addons:
   apt:
