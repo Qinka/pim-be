@@ -1,6 +1,6 @@
 #!/bin/bash
-
-echo After success (begin)
+set -e
+echo After success \(begin\)
 
 ### Setting up docker
 if [ x"$DOCKER" = "xtrue" ]; then
@@ -32,10 +32,11 @@ if [ x"$DOCKER" = "xtrue" ]; then
     mkdir -p docker.tmp/bin
     cp $HOME/.local/bin/pim-server docker.tmp/bin
     cp $TRAVIS_BUILD_DIR/integration/dockerfiles/hub.dockerfile$DEBUG_EXT docker.tmp/Dockerfile
-    cp $TRAVIS_BUILD_DIR/integration/enters/entrypoint.py docker.tmp/Dockerfile
-    ## Build
+    ## Build and push
+    cd docker.tmp
     docker build -t qinka/pim-be:$IMAGE_TAG .
     docker tag qinka/pim-be:$IMAGE_TAG qinka/pim-be:$LATEST_TAG
     docker tag qinka/pim-be:$IMAGE_TAG qinka/pim-be:$DEBUG_LATEST_TAG
     docker push qinka/pim-be
-echo After success (end)
+fi
+echo After success \(end\)

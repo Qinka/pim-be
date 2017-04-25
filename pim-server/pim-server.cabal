@@ -28,7 +28,7 @@ flag rtsopts
 
 flag llvm
      description: setup llvm
-     default: True
+     default: False
 
 flag llvm-special
      description: setup llvm with specific llvm: llc-3.7 & opt-3.7
@@ -47,7 +47,7 @@ executable pim-server
                          TypeFamilies
                          ViewPatterns
                          FlexibleInstances
-  build-depends:       base >=4.9 && <4.10
+  build-depends:       base >=4.8 && <4.10
                      , aeson
                      , text
                      , bytestring

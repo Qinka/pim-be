@@ -145,8 +145,8 @@ postAddR = do
 main :: IO ()
 main = do
   now <- getCurrentTime
-  port:args <- unwords <$> getArgs
-  pimLogger $ withPostgresqlPool (BC8.pack args) 100 $ \pool -> liftIO $
+  port:args <- getArgs
+  pimLogger $ withPostgresqlPool (BC8.pack $ unwords args) 100 $ \pool -> liftIO $
     warp (read port) $ App pool
 
 
