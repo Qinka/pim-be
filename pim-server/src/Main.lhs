@@ -27,25 +27,25 @@ Todo json
   own Text
   context Text
   date Day
-  prioity Text
+  priority Text
   deriving Show Eq
 Note json
   own Text
   context Text
-  prioity Text
+  priority Text
   deriving Show Eq
 Appointment json
   own Text
   context Text
   date Day
-  prioity Text
+  priority Text
   deriving Show Eq
 Contact json
   fname Text
   lname Text
   email Text
   own Text
-  prioity Text
+  priority Text
   deriving Show Eq
 |]
 
@@ -125,19 +125,19 @@ postAddR = do
           lname   <-            lookupPostParam "lname"
           fname   <-            lookupPostParam "fname"
           email   <-            lookupPostParam "email"
-          prioity <-            lookupPostParam "prioity"
+          priority <-            lookupPostParam "priority"
           case i of
             Just i' -> do
               let up = catMaybes [(Just ContactOwn) `match` own,(Just ContactLname) `match` lname, (Just ContactFname) `match` fname]
               runDB $ update i' up
               returnSuccess ()
-            Nothing -> case (own,lname,fname,email,prioity) of
+            Nothing -> case (own,lname,fname,email,priority) of
               (Just o,Just l,Just f,Just e,Just p) -> returnSuccess =<< (runDB $ insert $ Contact f l e o p)
               (Nothing,_,_,_,_) -> invalidArgs ["need own"]
               (_,Nothing,_,_,_) -> invalidArgs ["need last  name"]
               (_,_,Nothing,_,_) -> invalidArgs ["need first name"]
               (_,_,_,Nothing,_) -> invalidArgs ["need email"]
-              (_,_,_,_,Nothing) -> invalidArgs ["need prioity"]
+              (_,_,_,_,Nothing) -> invalidArgs ["need priority"]
 
 
 
@@ -171,18 +171,18 @@ updateDateable func vo vc vd = do
   own     <-            lookupPostParam "own"
   context <-            lookupPostParam "context"
   date    <- readMT <$> lookupPostParam "date"
-  prioity <-            lookupPostParam "prioity"
+  priority <-            lookupPostParam "priority"
   case i of
     Just i' -> do
       let up = catMaybes [vo `match` own,vc `match` context, vd `match` date]
       runDB $ update i' up
       returnSuccess ()
-    Nothing -> case (own,context,date,prioity) of
+    Nothing -> case (own,context,date,priority) of
       (Just o,Just c, Just d,Just p) -> returnSuccess =<< (runDB $ insert $ func o c d p)
       (Nothing,_,_,_) -> invalidArgs ["need owner"]
       (_,Nothing,_,_) -> invalidArgs ["need context"]
       (_,_,Nothing,_) -> invalidArgs ["need date"]
-      (_,_,_,Nothing) -> invalidArgs ["need prioity"]
+      (_,_,_,Nothing) -> invalidArgs ["need priority"]
       
 match (Just f) (Just v) = Just $ f =. v
 match _        _        = Nothing
@@ -202,17 +202,17 @@ updateItem func vo vc = do
   i       <- readMT <$> lookupPostParam "id"
   own     <-            lookupPostParam "own"
   context <-            lookupPostParam "context"
-  prioity <-            lookupPostParam "prioity"
+  priority <-            lookupPostParam "priority"
   case i of
     Just i' -> do
       let up = catMaybes [vo `match` own,vc `match` context]
       runDB $ update i' up
       returnSuccess ()
-    Nothing -> case (own,context,prioity) of
+    Nothing -> case (own,context,priority) of
       (Just o,Just c,Just p) -> returnSuccess =<< (runDB $ insert $ func o c p)
       (Nothing,_,_) -> invalidArgs ["need owner"]
       (_,Nothing,_) -> invalidArgs ["need context"]
-      (_,_,Nothing) -> invalidArgs ["need prioity"]
+      (_,_,Nothing) -> invalidArgs ["need priority"]
 \end{code}
 
 

@@ -2,7 +2,7 @@
 
 -- For the appointment
 
--- DROP SEQUENCE appointment_id_seq;
+-- Drop SEQUENCE appointment_id_seq;
 CREATE SEQUENCE appointment_id_seq
   INCREMENT 1
   MINVALUE 1
@@ -18,7 +18,7 @@ CREATE TABLE appointment
   date    date              NOT NULL,
   context character varying NOT NULL,
   own     character varying NOT NULL,
-  prioity character varying NOT NULL,
+  priority character varying NOT NULL,
   CONSTRAINT appointment_pkey PRIMARY KEY (id)
 );
 ALTER TABLE appointment
@@ -43,7 +43,7 @@ CREATE TABLE contact
   lname   character varying NOT NULL,
   email   character varying NOT NULL,
   own     character varying NOT NULL,
-  prioity character varying NOT NULL,
+  priority character varying NOT NULL,
   CONSTRAINT contact_pkey PRIMARY KEY (id)
 );
 ALTER TABLE contact
@@ -66,7 +66,7 @@ CREATE TABLE note
   id      bigint            NOT NULL DEFAULT nextval('note_id_seq'::regclass),
   context character varying NOT NULL,
   own     character varying NOT NULL,
-  prioity character varying NOT NULL,
+  priority character varying NOT NULL,
   CONSTRAINT note_pkey PRIMARY KEY (id)
 );
 ALTER TABLE note
@@ -90,7 +90,7 @@ CREATE TABLE todo
   date    date              NOT NULL,
   context character varying NOT NULL,
   own     character varying NOT NULL,
-  prioity character varying NOT NULL,
+  priority character varying NOT NULL,
   CONSTRAINT todo_pkey PRIMARY KEY (id)
 );
 ALTER TABLE public.todo

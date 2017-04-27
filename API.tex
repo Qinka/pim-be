@@ -348,7 +348,7 @@
             "context": "abc",
             "own": "qinka",
             "date": "2017-04-08",
-            "prioity": "normal"
+            "priority": "normal"
         },
         "id": 2
     },
@@ -357,7 +357,7 @@
             "context": "abc",
             "own": "qinka",
             "date": "2017-04-07",
-            "prioity": "normal"
+            "priority": "normal"
         },
         "id": 1
     },
@@ -365,7 +365,7 @@
         "contact": {
             "email": "qinka@qinak.pw",
             "own": "john",
-            "prioity": "normal",
+            "priority": "normal",
             "lname": "Lee",
             "fname": "John"
         },
@@ -375,7 +375,7 @@
         "contact": {
             "email": "qinka@qinka.pw",
             "own": "Qinka",
-            "prioity": "normal",
+            "priority": "normal",
             "lname": "Lee",
             "fname": "John"
         },
@@ -385,7 +385,7 @@
         "note": {
             "context": "1+1",
             "own": "qinka",
-            "prioity": "normal"
+            "priority": "normal"
         },
         "id": 1
     },
@@ -393,7 +393,7 @@
         "note": {
             "context": "1 1",
             "own": "qinka",
-            "prioity": "normal"
+            "priority": "normal"
         },
         "id": 2
     }
@@ -412,7 +412,7 @@
                        lname = 'Lee';
                        fname = 'John';
                        email = 'qinka@qinka.pw';
-                       prioity = 'normal'
+                       priority = 'normal'
                      }
            }
  $(Invoke-WebRequest @param).Content | jq .
@@ -421,7 +421,7 @@
  # bash
  curl 'localhost:3000/add?type=contact' -X POST \
    -d 'own=Qinka' -d 'lname=Lee' -d 'fname=John' \
-   -d 'email=qinka@qinka.pw' -d 'prioity=normal' | jq .
+   -d 'email=qinka@qinka.pw' -d 'priority=normal' | jq .
   \end{bash}
   
   The return datas will look like this:
