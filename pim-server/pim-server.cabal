@@ -79,7 +79,9 @@ executable pim-server
 
   -- rtsopts
   if flag(rtsopts)
-     ghc-options: -rtsopts
+     ghc-options: -rtsopts=all
+  else
+     ghc-options: -rtsopts=none
 
   -- llvm
   if flag(llvm) || flag(llvm-special)
