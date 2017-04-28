@@ -34,6 +34,9 @@ if [ x"$DOCKER" = "xtrue" ]; then
     cp $TRAVIS_BUILD_DIR/integration/dockerfiles/hub.dockerfile$DEBUG_EXT docker.tmp/Dockerfile
     ## Build and push
     cd docker.tmp
+    IMAGE_TAG=`echo $IMAGE_TAG | sed 's/\//-/'`
+    LATEST_TAG=`echo $LATEST_TAG | sed 's/\//-/'`
+    DEBUG_LATEST_TAG=`echo $DEBUG_LATEST_TAG | sed 's/\//-/'` 
     docker build -t qinka/pim-be:$IMAGE_TAG .
     docker tag qinka/pim-be:$IMAGE_TAG qinka/pim-be:$LATEST_TAG
     docker tag qinka/pim-be:$IMAGE_TAG qinka/pim-be:$DEBUG_LATEST_TAG
